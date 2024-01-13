@@ -1,0 +1,53 @@
+version: '2'
+services:
+  db:
+    image: postgres
+    container_name: uav_main_db
+    environment:
+      - POSTGRES_DB=$POSTGRES_DB
+      - POSTGRES_USER=$POSTGRES_USER
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+      - POSTGRES_NAME=$POSTGRES_NAME
+      - POSTGRES_ENCODING=UTF-8
+      - POSTGRES_SHARED_BUFFERS=6GB
+      - POSTGRES_MAX_CONNECTIONS=100
+    restart: always
+
+    expose:
+      - "5432" # expose for security, only accessible from within the docker network
+    volumes:
+      - postgres_data:/usr/share/postgres/data
+
+  django_app:
+    build: .
+    container_name: uav_main_django
+    entrypoint:  entrypoints/django.sh
+    restart: always
+    environment:
+      DJANGO_SETTINGS_MODULE: "$DJANGO_SETTINGS_MODULE"
+
+    ports:
+        - "8000:8000"
+    volumes:
+      - ./uav_main:/uav_main
+      - ./static:/static
+      - ./media:/media
+    depends_on:
+      - db # starts after db is up
+
+  nginx:
+    build: ./nginx
+    container_name: uav_main_nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./static:/static
+      - ./media:/media
+    depends_on:
+      - django_app
+
+volumes:
+    postgres_data:
+    static:
+    media:
