@@ -1,0 +1,141 @@
+{% extends 'base/base.html' %}
+
+{% block body %}
+
+<div class="container">
+    <div class="row">
+        <div class="col-sm-12">
+            <table id="rentals-table" class="table table-striped table-bordered" style="width:100%" data-server-side="true" data-ajax="/api/rental/rentals/?format=datatables">
+                <thead>
+                <tr>
+                    <th data-data="id">ID</th>
+                    <th data-data="uav__brand">UAV Brand</th>
+                    <th data-data="renting_member__username">Renting Member</th>
+                    <th data-data="start_date">Start Date</th>
+                    <th data-data="end_date">End Date</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">Edit Rental</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Edit form content goes here -->
+                <form id="editForm">
+                    <!-- Add your form fields here -->
+                    <label for="uavBrand">UAV Brand:</label>
+                    <input type="text" id="uavBrand" name="uavBrand" required>
+
+                    <label for="rentingMember">Renting Member:</label>
+                    <input type="text" id="rentingMember" name="rentingMember" required>
+
+                    <label for="startDate">Start Date:</label>
+                    <input type="text" id="startDate" name="startDate" required>
+
+                    <label for="endDate">End Date:</label>
+                    <input type="text" id="endDate" name="endDate" required>
+
+                    <button type="button" id="updateBtn">Update</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+{% endblock %}
+
+{% block javascript %}
+
+<script>
+    $(document).ready(function() {
+        var table = $('#rentals-table').DataTable({
+            "processing": true,
+            "serverSide": true,
+            "ajax": {
+                "url": '/api/rental/rentals/?format=datatables',
+                "type": 'GET'
+            },
+            "columns": [
+                { "data": "id" },
+                { "data": "uav.brand" },
+                { "data": "renting_member.username" },
+                { "data": "start_date" },
+                { "data": "end_date" },
+                {
+                    "data": null,
+                    "render": function(data, type, row) {
+                        return '<button class="editBtn" data-id="' + row.id + '">Edit</button>' +
+                               ' <button class="deleteBtn" data-id="' + row.id + '">Delete</button>';
+                    }
+                }
+            ]
+        });
+
+        $('#rentals-table tbody').on('click', 'button.editBtn', function() {
+            var rentalId = $(this).data('id');
+            // Burada edit modalini açabilir ve ilgili Rental'ı düzenleme formuyla doldurabilirsin.
+            $('#editModal').modal('show');
+            // Örneğin: $('#editModal .modal-body').load('/api/rentals/rental/ ' + rentalId + '/edit-form/');
+
+            // Önceki bilgileri formda göster
+            $.ajax({
+                url: '/api/rental/rentals/' + rentalId + '/',
+                type: 'GET',
+                success: function(data) {
+                    $('#uavBrand').val(data.uav.brand);
+                    $('#rentingMember').val(data.renting_member.username);
+                    $('#startDate').val(data.start_date);
+                    $('#endDate').val(data.end_date);
+                },
+                error: function() {
+                    alert('Error loading Rental ID: ' + rentalId);
+                }
+            });
+        });
+
+        // Update button click event
+        $('#updateBtn').on('click', function() {
+            var rentalId = $(this).data('id');
+
+            var formData = {
+                uavBrand: $('#uavBrand').val(),
+                rentingMember: $('#rentingMember').val(),
+                startDate: $('#startDate').val(),
+                endDate: $('#endDate').val()
+                // Add other form fields as needed
+            };
+
+            // Update Rental with PATCH request
+            $.ajax({
+                url: '/api/rental/rentals/' + rentalId + '/',
+                type: 'PATCH',
+                data: formData,
+                success: function() {
+                    alert('Rental ID: ' + rentalId + ' updated successfully.');
+                    table.ajax.reload();
+                    $('#editModal').modal('hide');
+                },
+                error: function() {
+                    alert('Error updating Rental ID: ' + rentalId);
+                }
+            });
+        });
+    });
+</script>
+
+{% endblock %}
