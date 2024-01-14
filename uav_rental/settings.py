@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "crispy_forms",
     "crispy_bootstrap5",
+    "rest_framework.authtoken",
+    "rest_framework_datatables",
     # Local apps
     "authentication",
     "rental",
@@ -58,6 +60,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "authentication.middleware.LoginMiddleware",
 ]
 
 ROOT_URLCONF = "uav_rental.urls"
@@ -142,3 +145,19 @@ ADMIN_USERNAME = os.getenv("ADMIN_USERNAME")
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+        'rest_framework_datatables.renderers.DatatablesRenderer',
+    ),
+    'DEFAULT_FILTER_BACKENDS': (
+        'rest_framework_datatables.filters.DatatablesFilterBackend',
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework_datatables.pagination.DatatablesPageNumberPagination',
+    'PAGE_SIZE': 50,
+}
